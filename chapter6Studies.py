@@ -302,3 +302,69 @@ ax.set_xlabel('$-\log(\lambda)$', fontsize=20)
 ax.set_ylabel('Cross-validated MSE', fontsize=20);
 
 print(tuned_lasso.coef_)
+
+# PCR and PLS Regression
+pca = PCA(n_components=2)
+linreg = skl.LinearRegression()
+pipe = Pipeline([('pca', pca),
+                 ('linreg', linreg)])
+pipe.fit(X, Y)
+pipe.named_steps['linreg'].coef_
+
+pipe = Pipeline([('scaler', scaler),
+                 ('pca', pca),
+                 ('linreg', linreg)])
+pipe.fit(X, Y)
+pipe.named_steps['linreg'].coef_
+
+param_grid = {'pca__n_components': range(1, 20)}
+grid = skm.GridSearchCV(pipe,
+                        param_grid,
+                        cv=kfold,
+                        scoring='neg_mean_squared_error')
+grid.fit(X, Y)
+
+# Plotting with other methods
+pcr_fig, ax = subplots(figsize=(8, 8))
+n_comp = param_grid['pca__n_components']
+ax.errorbar(n_comp,
+            -grid.cv_results_['mean_test_score'],
+            grid.cv_results_['std_test_score'] / np.sqrt(K))
+ax.set_ylabel('Cross-validated MSE', fontsize=20)
+ax.set_xlabel('# principal components', fontsize=20)
+ax.set_xticks(n_comp[::2])
+ax.set_ylim([50000, 250000]);
+
+# compute the MSE for just the null model with these splits
+Xn = np.zeros((X.shape[0], 1))
+cv_null = skm.cross_validate(linreg,
+                             Xn,
+                             Y,
+                             cv=kfold,
+                             scoring='neg_mean_squared_error')
+-cv_null['test_score'].mean()
+
+print(pipe.named_steps['pca'].explained_variance_ratio_)
+
+# Partial Least Squares (PLS)
+pls = PLSRegression(n_components=2,
+                    scale=True)
+pls.fit(X, Y)
+
+param_grid = {'n_components': range(1, 20)}
+grid = skm.GridSearchCV(pls,
+                        param_grid,
+                        cv=kfold,
+                        scoring='neg_mean_squared_error')
+grid.fit(X, Y)
+
+# Plot the MSE, CV error is minimized at 12
+pls_fig, ax = subplots(figsize=(8,8))
+n_comp = param_grid['n_components']
+ax.errorbar(n_comp,
+-grid.cv_results_['mean_test_score'],
+grid.cv_results_['std_test_score'] / np.sqrt(K))
+ax.set_ylabel('Cross-validated MSE', fontsize=20)
+ax.set_xlabel('# principal components', fontsize=20)
+ax.set_xticks(n_comp[::2])
+ax.set_ylim([50000,250000]);
