@@ -170,7 +170,7 @@ boost_boston.fit(X_train, y_train)
 
 test_error = np.zeros_like(boost_boston.train_score_)
 for idx, y_ in enumerate(boost_boston.staged_predict(X_test)):
-test_error[idx] = np.mean((y_test - y_)**2)
+    test_error[idx] = np.mean((y_test - y_)**2)
 plot_idx = np.arange(boost_boston.train_score_.shape[0])
 ax = subplots(figsize=(8,8))[1]
 ax.plot(plot_idx,
